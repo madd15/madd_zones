@@ -6,11 +6,14 @@ local zones = {}
 -- Function to convert zone data for client usage and mark permanent zones as locked
 local function FormatZoneForClient(zone)
     local isPermanent = zone.id and zone.id:sub(1, 5) == "perm_"
-
+    local zoneType = zone.zoneType
+    if isPermanent then
+        zoneType = zone.zoneType == "red" and "danger" or (zone.zoneType == "green" and "safe" or (zone.zoneType == "yellow" and "restricted" or "neutral")),
+    end
     return {
         id = zone.id,
         name = zone.name or zone.blipName,
-        type = zone.zoneType == "red" and "danger" or (zone.zoneType == "green" and "safe" or (zone.zoneType == "yellow" and "restricted" or "neutral")),
+        type = zoneType,
         description = zone.textToDisplay or "",
         isPermanent = isPermanent,
         metadata = {
@@ -136,12 +139,6 @@ AddEventHandler('zones:createFromNUI', function(zoneData)
     -- Create the zone
     local newZone = CreateZone(zoneData)
 
-    -- Format zone for client
-    local formattedZone = FormatZoneForClient(newZone)
-
-    -- Notify client of success
-    TriggerClientEvent('zones:created', src, formattedZone)
-
     print("Zone created:", newZone.id, newZone.name, "by", src)
 end)
 
@@ -159,12 +156,6 @@ AddEventHandler('zones:updateFromNUI', function(zoneId, zoneData)
     local success, error = UpdateZone(zoneId, zoneData)
 
     if success then
-        -- Format zone for client
-        local formattedZone = FormatZoneForClient(zones[zoneId])
-
-        -- Notify client of success
-        TriggerClientEvent('zones:updated', src, formattedZone)
-
         print("Zone updated:", zoneId, "by", src)
     else
         TriggerClientEvent('zones:error', src, error or 'Failed to update zone')
@@ -184,7 +175,6 @@ AddEventHandler('zones:deleteFromNUI', function(zoneId)
     local success, errorMsg = DeleteZone(zoneId)
 
     if success then
-        TriggerClientEvent('zones:deleted', -1, zoneId)
         print("Zone deleted:", zoneId, "by", src)
     else
         TriggerClientEvent('zones:error', src, errorMsg or 'Zone not found')
@@ -217,7 +207,7 @@ Citizen.CreateThread(function()
         for zoneId, zoneData in pairs(Config.PermZones) do
             local formattedZone = {
                 id = "perm_" .. zoneId,
-                name = zoneData.blipName or zoneId,
+                name = zoneData.name or zoneData.blipName or zoneId,
                 zoneType = zoneData.zoneType or "neutral",
                 textToDisplay = zoneData.textToDisplay or "",
                 coords = zoneData.coords,

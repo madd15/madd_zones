@@ -125,6 +125,7 @@ local blipColors = {
 
 -- Function to create blip for a zone
 local function CreateZoneBlip(zone)
+    print(json.encode(zone, { indent = true }))
     if not zone or not zone.metadata or not zone.metadata.coords or not zone.id then
         if debugMode then
             print('Invalid zone data for blip creation')
@@ -150,7 +151,7 @@ local function CreateZoneBlip(zone)
     -- Only create blips if showBlip is true
     if zone.metadata.showBlip then
         if debugMode then
-            print('Creating blip for zone: ' .. zone.name)
+            print('Creating radius blip for zone: ' .. zone.name)
         end
         -- Create radius blip
         zoneBlips[zone.id] = AddBlipForRadius(
@@ -248,7 +249,6 @@ end)
 -- Event handlers for zone data from server
 RegisterNetEvent('zones:added')
 AddEventHandler('zones:added', function(zone)
-    print(json.encode(zone, { indent = true }))
     zoneCache[zone.id] = zone
     CreateZonePoint(zone)
     CreateZoneBlip(zone)
